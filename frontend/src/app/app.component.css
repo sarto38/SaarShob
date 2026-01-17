@@ -1,0 +1,13 @@
+.spacer {
+  flex: 1 1 auto;
+}
+
+mat-toolbar {
+  margin-bottom: 20px;
+}
+
+.welcome-message {
+  margin-right: 16px;
+  font-size: 14px;
+  font-weight: 500;
+}

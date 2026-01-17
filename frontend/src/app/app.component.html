@@ -1,0 +1,10 @@
+<mat-toolbar color="primary">
+  <span>Todo App</span>
+  <span class="spacer"></span>
+  <button *ngIf="!isAuthenticated" mat-button routerLink="/login">Login</button>
+  <button *ngIf="!isAuthenticated" mat-button routerLink="/register">Register</button>
+  <span *ngIf="isAuthenticated" class="welcome-message">Welcome, {{ currentUser?.username }}</span>
+  <button *ngIf="isAuthenticated" mat-button (click)="logout()">Logout</button>
+</mat-toolbar>
+
+<router-outlet></router-outlet>

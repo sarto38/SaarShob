@@ -1,0 +1,44 @@
+<div class="todo-list-container">
+  <div class="header">
+    <h1>Tasks</h1>
+    <button mat-raised-button color="primary" (click)="openAddTaskDialog()">
+      <mat-icon>add</mat-icon>
+      Add Task
+    </button>
+  </div>
+
+  <div *ngIf="isLoading" class="loading">
+    <p>Loading tasks...</p>
+  </div>
+
+  <div *ngIf="!isLoading && tasks.length === 0" class="empty-state">
+    <mat-icon class="empty-icon">check_circle_outline</mat-icon>
+    <p>No tasks yet. Create your first task!</p>
+  </div>
+
+  <div *ngIf="!isLoading && tasks.length > 0" class="tasks-grid">
+    <div class="task-section">
+      <h2>Pending Tasks ({{ pendingTasks.length }})</h2>
+      <div class="tasks-list">
+        <app-todo-item
+          *ngFor="let task of pendingTasks"
+          [task]="task"
+          (taskUpdated)="loadTasks()"
+          (taskDeleted)="loadTasks()">
+        </app-todo-item>
+      </div>
+    </div>
+
+    <div class="task-section">
+      <h2>Completed Tasks ({{ completedTasks.length }})</h2>
+      <div class="tasks-list">
+        <app-todo-item
+          *ngFor="let task of completedTasks"
+          [task]="task"
+          (taskUpdated)="loadTasks()"
+          (taskDeleted)="loadTasks()">
+        </app-todo-item>
+      </div>
+    </div>
+  </div>
+</div>

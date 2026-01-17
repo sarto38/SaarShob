@@ -1,0 +1,24 @@
+# Node
+node_modules/
+npm-debug.log
+yarn-error.log
+
+# Backend
+backend/.env
+backend/dist/
+backend/*.log
+
+# Frontend
+frontend/dist/
+frontend/.angular/
+frontend/tmp/
+frontend/out-tsc/
+
+# IDEs
+.vscode/
+.idea/
+.cursor/
+
+# System
+.DS_Store
+Thumbs.db

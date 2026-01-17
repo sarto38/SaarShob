@@ -1,0 +1,61 @@
+<mat-card class="task-card" [class.locked]="isLocked">
+  <mat-card-content>
+    <div class="task-header">
+      <mat-checkbox
+        [checked]="task.completed"
+        (change)="toggleComplete()"
+        [disabled]="!canEdit"
+        color="primary">
+      </mat-checkbox>
+      <div class="task-title" [class.completed]="task.completed">
+        {{ task.title }}
+      </div>
+      <div class="task-actions">
+        <button
+          mat-icon-button
+          (click)="editTask()"
+          [disabled]="!canEdit"
+          matTooltip="Edit task">
+          <mat-icon>edit</mat-icon>
+        </button>
+        <button
+          mat-icon-button
+          color="warn"
+          (click)="deleteTask()"
+          [disabled]="!canEdit"
+          matTooltip="Delete task">
+          <mat-icon>delete</mat-icon>
+        </button>
+      </div>
+    </div>
+
+    <div *ngIf="task.description" class="task-description">
+      {{ task.description }}
+    </div>
+
+    <div class="task-meta">
+      <mat-chip [style.background-color]="getPriorityColor()" [style.color]="'white'">
+        {{ getPriorityLabel() }}
+      </mat-chip>
+      <span *ngIf="task.dueDate" class="meta-item">
+        <mat-icon>event</mat-icon>
+        Due: {{ formatDate(task.dueDate) }}
+      </span>
+      <span *ngIf="isLocked" class="locked-indicator">
+        <mat-icon>lock</mat-icon>
+        Locked by {{ getUserName(task.lockedBy) }}
+      </span>
+    </div>
+
+    <div class="task-audit">
+      <div class="audit-item">
+        <mat-icon>person_add</mat-icon>
+        Created by {{ getUserName(task.createdBy) }} on {{ formatDate(task.createdAt) }}
+      </div>
+      <div *ngIf="task.updatedBy && task.updatedAt !== task.createdAt" class="audit-item">
+        <mat-icon>edit_note</mat-icon>
+        Last updated by {{ getUserName(task.updatedBy) }} on {{ formatDate(task.updatedAt) }}
+      </div>
+    </div>
+  </mat-card-content>
+</mat-card>
