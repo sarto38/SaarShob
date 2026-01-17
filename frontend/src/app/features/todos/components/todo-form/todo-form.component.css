@@ -7,6 +7,10 @@ mat-dialog-content {
   min-width: 400px;
 }
 
+form {
+  margin-top: 10px !important;
+}
+
 mat-dialog-actions {
   padding: 16px 24px;
 }
