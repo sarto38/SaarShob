@@ -8,7 +8,6 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatInputModule } from '@angular/material/input';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { AuthService } from '../../../../core/services/auth.service';
-import { WebSocketService } from '../../../../core/services/websocket.service';
 
 @Component({
   selector: 'app-login',
@@ -34,8 +33,7 @@ export class LoginComponent implements OnInit {
     private fb: FormBuilder,
     private authService: AuthService,
     private router: Router,
-    private snackBar: MatSnackBar,
-    private websocketService: WebSocketService
+    private snackBar: MatSnackBar
   ) {
     this.loginForm = this.fb.group({
       email: ['', [Validators.required, Validators.email]],
@@ -57,17 +55,11 @@ export class LoginComponent implements OnInit {
       this.isLoading = true;
       this.authService.login(this.loginForm.value).subscribe({
         next: () => {
-          this.websocketService.connect();
           this.router.navigate(['/todos']);
           this.snackBar.open('Login successful', 'Close', { duration: 3000 });
         },
-        error: (error) => {
+        error: () => {
           this.isLoading = false;
-          this.snackBar.open(
-            error.error?.message || 'Login failed. Please check your credentials.',
-            'Close',
-            { duration: 5000 }
-          );
         }
       });
     }

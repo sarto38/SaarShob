@@ -8,7 +8,6 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatInputModule } from '@angular/material/input';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { AuthService } from '../../../../core/services/auth.service';
-import { WebSocketService } from '../../../../core/services/websocket.service';
 
 @Component({
   selector: 'app-register',
@@ -34,8 +33,7 @@ export class RegisterComponent implements OnInit {
     private fb: FormBuilder,
     private authService: AuthService,
     private router: Router,
-    private snackBar: MatSnackBar,
-    private websocketService: WebSocketService
+    private snackBar: MatSnackBar
   ) {
     this.registerForm = this.fb.group({
       username: ['', [Validators.required, Validators.minLength(3), Validators.maxLength(30)]],
@@ -70,17 +68,11 @@ export class RegisterComponent implements OnInit {
       const { confirmPassword, ...userData } = this.registerForm.value;
       this.authService.register(userData).subscribe({
         next: () => {
-          this.websocketService.connect();
           this.router.navigate(['/todos']);
           this.snackBar.open('Registration successful', 'Close', { duration: 3000 });
         },
-        error: (error) => {
+        error: () => {
           this.isLoading = false;
-          this.snackBar.open(
-            error.error?.message || 'Registration failed. Please try again.',
-            'Close',
-            { duration: 5000 }
-          );
         }
       });
     }

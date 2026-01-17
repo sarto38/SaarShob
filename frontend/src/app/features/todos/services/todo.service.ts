@@ -3,10 +3,23 @@ import { HttpClient } from '@angular/common/http';
 import { BehaviorSubject, Observable } from 'rxjs';
 import { tap } from 'rxjs/operators';
 import { environment } from '../../../../environments/environment';
-import { Task, CreateTaskDto, UpdateTaskDto, TaskPriority } from '../../../shared/models/task.model';
+import { Task, CreateTaskDto, UpdateTaskDto } from '../../../shared/models/task.model';
 import { WebSocketService } from '../../../core/services/websocket.service';
 import { AuthService } from '../../../core/services/auth.service';
 
+/**
+ * TodoService
+ *
+ * This service manages CRUD operations and state for tasks ("todos") within the application.
+ * 
+ * Responsibilities:
+ * - Fetches, creates, updates, and deletes tasks via HTTP API calls.
+ * - Maintains a real-time, observable list of tasks which is updated upon receiving WebSocket events
+ *   (for task creation, updates, deletion, locking, unlocking), enabling live collaboration and feedback.
+ * - Provides methods to determine lock status on tasks and whether the current user can edit a given task,
+ *   supporting collaborative editing with lock-based access.
+ * - Sorts tasks by priority and creation time for consistent UI presentation.
+ */
 @Injectable({
   providedIn: 'root'
 })
@@ -14,12 +27,6 @@ export class TodoService {
   private apiUrl = `${environment.apiUrl}/tasks`;
   private tasksSubject = new BehaviorSubject<Task[]>([]);
   public tasks$ = this.tasksSubject.asObservable();
-
-  private priorityWeights: Record<string, number> = {
-    [TaskPriority.HIGH]: 3,
-    [TaskPriority.MEDIUM]: 2,
-    [TaskPriority.LOW]: 1
-  };
 
   constructor(
     private http: HttpClient,
@@ -29,41 +36,25 @@ export class TodoService {
     this.initializeWebSocketListeners();
   }
 
-  private sortTasks(tasks: Task[]): Task[] {
-    return [...tasks].sort((a, b) => {
-      const weightA = this.priorityWeights[a.priority] || 0;
-      const weightB = this.priorityWeights[b.priority] || 0;
-      
-      if (weightA !== weightB) {
-        return weightB - weightA; // High priority first
-      }
-      
-      // Secondary sort by createdAt (newest first)
-      const dateA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
-      const dateB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
-      return dateB - dateA;
-    });
-  }
-
   private initializeWebSocketListeners(): void {
     // Listen for real-time updates
     this.websocketService.taskCreated$.subscribe(task => {
       const currentTasks = this.tasksSubject.value;
-      this.tasksSubject.next(this.sortTasks([...currentTasks, task]));
+      this.tasksSubject.next([...currentTasks, task]);
     });
 
     this.websocketService.taskUpdated$.subscribe(updatedTask => {
-      const currentTasks = this.tasksSubject.value;
+      const currentTasks = [...this.tasksSubject.value];
       const index = currentTasks.findIndex(t => t._id === updatedTask._id);
       if (index !== -1) {
         currentTasks[index] = updatedTask;
-        this.tasksSubject.next(this.sortTasks([...currentTasks]));
+        this.tasksSubject.next(currentTasks);
       }
     });
 
     this.websocketService.taskDeleted$.subscribe(taskId => {
       const currentTasks = this.tasksSubject.value.filter(t => t._id !== taskId);
-      this.tasksSubject.next(this.sortTasks(currentTasks));
+      this.tasksSubject.next(currentTasks);
     });
 
     this.websocketService.taskLocked$.subscribe(({ taskId, lockedBy }) => {
@@ -75,7 +66,7 @@ export class TodoService {
           lockedBy,
           lockedAt: new Date().toISOString()
         };
-        this.tasksSubject.next(this.sortTasks(currentTasks));
+        this.tasksSubject.next(currentTasks);
       }
     });
 
@@ -88,7 +79,7 @@ export class TodoService {
           lockedBy: undefined,
           lockedAt: undefined
         };
-        this.tasksSubject.next(this.sortTasks(currentTasks));
+        this.tasksSubject.next(currentTasks);
       }
     });
   }
@@ -96,7 +87,7 @@ export class TodoService {
   loadTasks(): Observable<Task[]> {
     return this.http.get<Task[]>(this.apiUrl).pipe(
       tap(tasks => {
-        this.tasksSubject.next(this.sortTasks(tasks));
+        this.tasksSubject.next(tasks);
       })
     );
   }
@@ -110,7 +101,7 @@ export class TodoService {
       tap(task => {
         // Task will be added via WebSocket, but we can also add it here for immediate UI update
         const currentTasks = this.tasksSubject.value;
-        this.tasksSubject.next(this.sortTasks([...currentTasks, task]));
+        this.tasksSubject.next([...currentTasks, task]);
       })
     );
   }
@@ -119,11 +110,11 @@ export class TodoService {
     return this.http.put<Task>(`${this.apiUrl}/${id}`, taskData).pipe(
       tap(updatedTask => {
         // Task will be updated via WebSocket, but we can also update it here for immediate UI update
-        const currentTasks = this.tasksSubject.value;
+        const currentTasks = [...this.tasksSubject.value];
         const index = currentTasks.findIndex(t => t._id === id);
         if (index !== -1) {
           currentTasks[index] = updatedTask;
-          this.tasksSubject.next(this.sortTasks([...currentTasks]));
+          this.tasksSubject.next(currentTasks);
         }
       })
     );
@@ -134,7 +125,7 @@ export class TodoService {
       tap(() => {
         // Task will be removed via WebSocket, but we can also remove it here for immediate UI update
         const currentTasks = this.tasksSubject.value.filter(t => t._id !== id);
-        this.tasksSubject.next(this.sortTasks(currentTasks));
+        this.tasksSubject.next(currentTasks);
       })
     );
   }

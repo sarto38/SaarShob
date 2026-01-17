@@ -5,10 +5,10 @@ import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { Subscription } from 'rxjs';
+import { map } from 'rxjs/operators';
 import { TodoService } from '../../services/todo.service';
-import { WebSocketService } from '../../../../core/services/websocket.service';
 import { AuthService } from '../../../../core/services/auth.service';
-import { Task } from '../../../../shared/models/task.model';
+import { Task, TaskPriority } from '../../../../shared/models/task.model';
 import { TodoFormComponent } from '../todo-form/todo-form.component';
 import { TodoItemComponent } from '../todo-item/todo-item.component';
 
@@ -32,9 +32,14 @@ export class TodoListComponent implements OnInit, OnDestroy {
   isLoading = false;
   private subscriptions = new Subscription();
 
+  private priorityWeights: Record<string, number> = {
+    [TaskPriority.HIGH]: 3,
+    [TaskPriority.MEDIUM]: 2,
+    [TaskPriority.LOW]: 1
+  };
+
   constructor(
     private todoService: TodoService,
-    private websocketService: WebSocketService,
     private authService: AuthService,
     private snackBar: MatSnackBar,
     private dialog: MatDialog,
@@ -42,15 +47,14 @@ export class TodoListComponent implements OnInit, OnDestroy {
   ) {}
 
   ngOnInit(): void {
-    // Connect WebSocket
-    this.websocketService.connect();
-
     // Load tasks
     this.loadTasks();
 
     // Subscribe to real-time updates
     this.subscriptions.add(
-      this.todoService.tasks$.subscribe(tasks => {
+      this.todoService.tasks$.pipe(
+        map(tasks => this.sortTasks(tasks))
+      ).subscribe(tasks => {
         this.tasks = tasks;
         console.log('Tasks updated');
         this.cdr.detectChanges();
@@ -61,6 +65,27 @@ export class TodoListComponent implements OnInit, OnDestroy {
         }
       })
     );
+  }
+
+  private sortTasks(tasks: Task[]): Task[] {
+    return [...tasks].sort((a, b) => {
+      const weightA = this.priorityWeights[a.priority] || 0;
+      const weightB = this.priorityWeights[b.priority] || 0;
+      
+      if (weightA !== weightB) {
+        return weightB - weightA; // High priority first
+      }
+      
+      // Secondary sort by dueDate (earlier due dates first), then by createdAt (newest first)
+      const dueA = a.dueDate ? new Date(a.dueDate).getTime() : Number.POSITIVE_INFINITY;
+      const dueB = b.dueDate ? new Date(b.dueDate).getTime() : Number.POSITIVE_INFINITY;
+      if (dueA !== dueB) {
+        return dueA - dueB; // Due soonest first (nulls last)
+      }
+      const createdA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+      const createdB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+      return createdB - createdA; // Newest created first
+    });
   }
 
   ngOnDestroy(): void {
@@ -75,13 +100,8 @@ export class TodoListComponent implements OnInit, OnDestroy {
         console.log('Tasks loaded');
         this.cdr.detectChanges();
       },
-      error: (error) => {
+      error: () => {
         this.isLoading = false;
-        this.snackBar.open(
-          error.error?.message || 'Failed to load tasks',
-          'Close',
-          { duration: 5000 }
-        );
       }
     });
   }

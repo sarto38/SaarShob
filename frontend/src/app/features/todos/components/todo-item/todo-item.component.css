@@ -56,6 +56,26 @@
   gap: 5px;
   font-size: 0.9em;
   color: #666;
+  padding: 2px 8px;
+  border-radius: 4px;
+}
+
+.meta-item.overdue {
+  background-color: #f44336;
+  color: white;
+}
+
+.meta-item.overdue mat-icon {
+  color: white;
+}
+
+.meta-item.due-soon {
+  background-color: #ff9800;
+  color: white;
+}
+
+.meta-item.due-soon mat-icon {
+  color: white;
 }
 
 .task-audit {

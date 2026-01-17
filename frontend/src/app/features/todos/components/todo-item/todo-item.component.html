@@ -37,9 +37,9 @@
       <mat-chip [style.background-color]="getPriorityColor()" [style.color]="'white'">
         {{ getPriorityLabel() }}
       </mat-chip>
-      <span *ngIf="task.dueDate" class="meta-item">
+      <span *ngIf="task.dueDate" class="meta-item" [class.overdue]="isOverdue()" [class.due-soon]="isDueSoon()">
         <mat-icon>event</mat-icon>
-        Due: {{ formatDate(task.dueDate) }}
+        Due: {{ task.dueDate | date }}
       </span>
       <span *ngIf="isLocked" class="locked-indicator">
         <mat-icon>lock</mat-icon>

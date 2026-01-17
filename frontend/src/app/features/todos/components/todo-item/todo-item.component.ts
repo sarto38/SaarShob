@@ -76,13 +76,6 @@ export class TodoItemComponent implements OnInit, OnChanges {
     }).subscribe({
       next: () => {
         this.taskUpdated.emit();
-      },
-      error: (error) => {
-        this.snackBar.open(
-          error.error?.message || 'Failed to update task',
-          'Close',
-          { duration: 5000 }
-        );
       }
     });
   }
@@ -108,13 +101,6 @@ export class TodoItemComponent implements OnInit, OnChanges {
             this.taskUpdated.emit();
           }
         });
-      },
-      error: (error) => {
-        this.snackBar.open(
-          error.error?.message || 'Failed to lock task',
-          'Close',
-          { duration: 5000 }
-        );
       }
     });
   }
@@ -130,13 +116,6 @@ export class TodoItemComponent implements OnInit, OnChanges {
         next: () => {
           this.taskDeleted.emit();
           this.snackBar.open('Task deleted successfully', 'Close', { duration: 3000 });
-        },
-        error: (error) => {
-          this.snackBar.open(
-            error.error?.message || 'Failed to delete task',
-            'Close',
-            { duration: 5000 }
-          );
         }
       });
     }
@@ -160,5 +139,26 @@ export class TodoItemComponent implements OnInit, OnChanges {
     if (!user) return 'Unknown';
     if (typeof user === 'string') return 'User';
     return user.username || 'Unknown';
+  }
+
+  isOverdue(): boolean {
+    if (!this.task.dueDate || this.task.completed) return false;
+    const dueDate = new Date(this.task.dueDate);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    return dueDate < today;
+  }
+
+  isDueSoon(): boolean {
+    if (!this.task.dueDate || this.task.completed || this.isOverdue()) return false;
+    const dueDate = new Date(this.task.dueDate);
+    dueDate.setHours(0, 0, 0, 0);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    
+    const tomorrow = new Date(today);
+    tomorrow.setDate(today.getDate() + 1);
+    
+    return dueDate.getTime() === today.getTime() || dueDate.getTime() === tomorrow.getTime();
   }
 }
