@@ -52,6 +52,10 @@
           </mat-error>
         </mat-form-field>
 
+        <div *ngIf="errorMessage" class="error-message">
+          {{ errorMessage }}
+        </div>
+
         <button mat-raised-button color="primary" type="submit" class="full-width" [disabled]="isLoading || registerForm.invalid">
           {{ isLoading ? 'Registering...' : 'Register' }}
         </button>
