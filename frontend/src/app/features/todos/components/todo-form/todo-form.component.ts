@@ -1,4 +1,4 @@
-import { Component, OnInit, Inject } from '@angular/core';
+import { Component, OnInit, Inject, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { MatDialogRef, MAT_DIALOG_DATA, MatDialogModule } from '@angular/material/dialog';
@@ -9,6 +9,7 @@ import { MatSelectModule } from '@angular/material/select';
 import { MatDatepickerModule } from '@angular/material/datepicker';
 import { MatNativeDateModule } from '@angular/material/core';
 import { MatButtonModule } from '@angular/material/button';
+import { finalize } from 'rxjs';
 import { TodoService } from '../../services/todo.service';
 import { Task, TaskPriority, CreateTaskDto, UpdateTaskDto } from '../../../../shared/models/task.model';
 
@@ -33,6 +34,7 @@ import { Task, TaskPriority, CreateTaskDto, UpdateTaskDto } from '../../../../sh
 export class TodoFormComponent implements OnInit {
   taskForm: FormGroup;
   isEditMode = false;
+  isLoading = false;
   taskPriorities = [
     { value: TaskPriority.LOW, label: 'Low' },
     { value: TaskPriority.MEDIUM, label: 'Medium' },
@@ -44,6 +46,7 @@ export class TodoFormComponent implements OnInit {
     private todoService: TodoService,
     private dialogRef: MatDialogRef<TodoFormComponent>,
     private snackBar: MatSnackBar,
+    private cdr: ChangeDetectorRef,
     @Inject(MAT_DIALOG_DATA) public data: { task: Task | null }
   ) {
     this.taskForm = this.fb.group({
@@ -68,6 +71,7 @@ export class TodoFormComponent implements OnInit {
 
   onSubmit(): void {
     if (this.taskForm.valid) {
+      this.isLoading = true;
       const formValue = this.taskForm.value;
       const baseData = {
         description: formValue.description || undefined,
@@ -80,7 +84,12 @@ export class TodoFormComponent implements OnInit {
           ...baseData,
           title: formValue.title
         };
-        this.todoService.updateTask(this.data.task._id!, updateData).subscribe({
+        this.todoService.updateTask(this.data.task._id!, updateData).pipe(
+          finalize(() => {
+            this.isLoading = false;
+            this.cdr.detectChanges();
+          })
+        ).subscribe({
           next: () => {
             this.snackBar.open('Task updated successfully', 'Close', { duration: 3000 });
             this.dialogRef.close(true);
@@ -98,7 +107,12 @@ export class TodoFormComponent implements OnInit {
           ...baseData,
           title: formValue.title
         };
-        this.todoService.createTask(createData).subscribe({
+        this.todoService.createTask(createData).pipe(
+          finalize(() => {
+            this.isLoading = false;
+            this.cdr.detectChanges();
+          })
+        ).subscribe({
           next: () => {
             this.snackBar.open('Task created successfully', 'Close', { duration: 3000 });
             this.dialogRef.close(true);

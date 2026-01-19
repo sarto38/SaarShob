@@ -4,7 +4,7 @@ import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
-import { Subscription } from 'rxjs';
+import { Subscription, finalize } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { TodoService } from '../../services/todo.service';
 import { AuthService } from '../../../../core/services/auth.service';
@@ -30,6 +30,7 @@ export class TodoListComponent implements OnInit, OnDestroy {
   @ViewChildren(TodoItemComponent) todoItems!: QueryList<TodoItemComponent>;
   tasks: Task[] = [];
   isLoading = false;
+  isAddingTask = false;
   private subscriptions = new Subscription();
 
   private priorityWeights: Record<string, number> = {
@@ -107,12 +108,18 @@ export class TodoListComponent implements OnInit, OnDestroy {
   }
 
   openAddTaskDialog(): void {
+    this.isAddingTask = true;
     const dialogRef = this.dialog.open(TodoFormComponent, {
       width: '500px',
       data: { task: null }
     });
 
-    dialogRef.afterClosed().subscribe((result: boolean | undefined) => {
+    dialogRef.afterClosed().pipe(
+      finalize(() => {
+        this.isAddingTask = false;
+        this.cdr.detectChanges();
+      })
+    ).subscribe((result: boolean | undefined) => {
       if (result) {
         this.loadTasks();
       }

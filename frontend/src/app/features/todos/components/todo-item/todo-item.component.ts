@@ -1,4 +1,4 @@
-import { Component, Input, Output, EventEmitter, OnInit, OnChanges, SimpleChanges } from '@angular/core';
+import { Component, Input, Output, EventEmitter, OnInit, OnChanges, SimpleChanges, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
@@ -8,6 +8,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
 import { MatChipsModule } from '@angular/material/chips';
 import { MatTooltipModule } from '@angular/material/tooltip';
+import { Subscription, finalize } from 'rxjs';
 import { TodoService } from '../../services/todo.service';
 import { AuthService } from '../../../../core/services/auth.service';
 import { Task, TaskPriority } from '../../../../shared/models/task.model';
@@ -37,6 +38,7 @@ export class TodoItemComponent implements OnInit, OnChanges {
 
   isLocked = false;
   canEdit = false;
+  isLoading = false;
   priorityColors: { [key: string]: string } = {
     low: '#4caf50',
     medium: '#ff9800',
@@ -47,7 +49,8 @@ export class TodoItemComponent implements OnInit, OnChanges {
     private todoService: TodoService,
     private authService: AuthService,
     private snackBar: MatSnackBar,
-    private dialog: MatDialog
+    private dialog: MatDialog,
+    private cdr: ChangeDetectorRef
   ) {}
 
   ngOnInit(): void {
@@ -71,9 +74,15 @@ export class TodoItemComponent implements OnInit, OnChanges {
       return;
     }
 
+    this.isLoading = true;
     this.todoService.updateTask(this.task._id!, {
       completed: !this.task.completed
-    }).subscribe({
+    }).pipe(
+      finalize(() => {
+        this.isLoading = false;
+        this.cdr.detectChanges();
+      })
+    ).subscribe({
       next: () => {
         this.taskUpdated.emit();
       }
@@ -87,6 +96,7 @@ export class TodoItemComponent implements OnInit, OnChanges {
     }
 
     // Lock the task before editing
+    this.isLoading = true;
     this.todoService.lockTask(this.task._id!).subscribe({
       next: () => {
         const dialogRef = this.dialog.open(TodoFormComponent, {
@@ -94,13 +104,22 @@ export class TodoItemComponent implements OnInit, OnChanges {
           data: { task: this.task }
         });
 
-        dialogRef.afterClosed().subscribe((result: boolean | undefined) => {
+        dialogRef.afterClosed().pipe(
+          finalize(() => {
+            this.isLoading = false;
+            this.cdr.detectChanges();
+          })
+        ).subscribe((result: boolean | undefined) => {
           // Unlock the task after dialog closes
           this.todoService.unlockTask(this.task._id!).subscribe();
           if (result) {
             this.taskUpdated.emit();
           }
         });
+      },
+      error: () => {
+        this.isLoading = false;
+        this.cdr.detectChanges();
       }
     });
   }
@@ -112,7 +131,13 @@ export class TodoItemComponent implements OnInit, OnChanges {
     }
 
     if (confirm('Are you sure you want to delete this task?')) {
-      this.todoService.deleteTask(this.task._id!).subscribe({
+      this.isLoading = true;
+      this.todoService.deleteTask(this.task._id!).pipe(
+        finalize(() => {
+          this.isLoading = false;
+          this.cdr.detectChanges();
+        })
+      ).subscribe({
         next: () => {
           this.taskDeleted.emit();
           this.snackBar.open('Task deleted successfully', 'Close', { duration: 3000 });

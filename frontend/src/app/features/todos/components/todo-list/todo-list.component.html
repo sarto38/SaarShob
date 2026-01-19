@@ -1,7 +1,7 @@
 <div class="todo-list-container">
   <div class="header">
     <h1>Tasks</h1>
-    <button mat-raised-button color="primary" (click)="openAddTaskDialog()">
+    <button mat-raised-button color="primary" (click)="openAddTaskDialog()" [disabled]="isAddingTask">
       <mat-icon>add</mat-icon>
       Add Task
     </button>
