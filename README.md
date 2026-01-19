@@ -2,6 +2,28 @@
 
 A full-stack real-time To-Do application built with Angular, Node.js, Express, MongoDB, and WebSockets. This application demonstrates real-time data synchronization across multiple clients, edit locking mechanisms, and modern web development practices.
 
+## 🚀 Quick Start
+
+Get the application running in 4 easy steps:
+
+1. **Install Dependencies**:
+   ```bash
+   # In root directory
+   cd backend && npm install
+   cd ../frontend && npm install
+   ```
+2. **Environment Setup**:
+   - Create `backend/.env` (use `backend/.env.example` as template)
+   - Ensure **MongoDB** is running locally
+3. **Run Application**:
+   - **Terminal 1 (Backend)**: `cd backend && npm run dev`
+   - **Terminal 2 (Frontend)**: `cd frontend && npm start`
+4. **Access**: Open [http://localhost:4200](http://localhost:4200)
+
+---
+
+![App Screenshot](screenshot.png)
+
 ## Features
 
 - **Real-Time Updates**: Changes made by one client are instantly reflected in all connected clients via WebSocket
