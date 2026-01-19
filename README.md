@@ -63,7 +63,14 @@ SaarShob/
 └── README.md
 ```
 
-## Design Patterns
+## Design Decisions and Patterns
+
+### Key Design Decisions
+
+1. **WebSockets for Real-Time Sync**: We chose WebSockets (via the `ws` library) over Polling or Server-Sent Events (SSE) to ensure true bi-directional, low-latency communication. This is crucial for the "edit locking" feature where state changes must be broadcasted immediately.
+2. **Edit Locking Mechanism**: To prevent the "lost update" problem in a collaborative environment, we implemented a server-side locking mechanism. This ensures that only one user can modify a specific task at a time, providing a smoother collaborative experience.
+3. **MongoDB for Flexibility**: A NoSQL database was chosen for its schema flexibility, which is beneficial for evolving task structures (e.g., adding priority, due dates, or sub-tasks without complex migrations).
+4. **Separation of Concerns**: The project follows a strict multi-layered architecture (Controller -> Service -> Repository) to ensure maintainability, testability, and clear boundaries between business logic and data access.
 
 ### Backend Patterns
 
@@ -121,14 +128,14 @@ cd backend
 npm install
 ```
 
-3. Create a `.env` file in the backend directory:
+3. Create a `.env` file in the backend directory (use `.env.example` as a template):
 ```env
 PORT=3000
 NODE_ENV=development
 MONGODB_URI=mongodb://localhost:27017/todoapp
 JWT_SECRET=your-super-secret-jwt-key-change-this-in-production
 JWT_EXPIRES_IN=7d
-WS_PORT=3001
+FRONTEND_URL=http://localhost:4200
 ```
 
 4. Make sure MongoDB is running on your system
@@ -218,7 +225,7 @@ To prevent concurrent edits:
 - `MONGODB_URI` - MongoDB connection string
 - `JWT_SECRET` - Secret key for JWT tokens
 - `JWT_EXPIRES_IN` - JWT token expiration time
-- `WS_PORT` - WebSocket port (optional)
+- `FRONTEND_URL` - URL of the frontend application (for CORS)
 
 ### Frontend (environment.ts)
 - `apiUrl` - Backend API URL
